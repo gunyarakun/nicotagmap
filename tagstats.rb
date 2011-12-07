@@ -1,29 +1,30 @@
 #!/usr/bin/ruby
 $KCODE = 'u'
+
 # タグ統計 for ニコニコ動画統計クラスタ
-$: << '../cgis/'
-require 'cgi/util'
-require 'cgi/db'
-require 'config.honban.rb'
+require 'uri'
+require 'net/https'
 require 'pp'
+require 'jcode'
 
 NNODES = 1000
 
-# 上位NNODESを取得
+def convert_hiragana_to_katakana(str)
+  str.nil? ? nil : str.tr('ぁ-ん', 'ァ-ン')
+end
 
-slave_db = SlaveDB.new(CONF)
-# NNODESの1.1倍取得。なぜならひらがな・カタカナ同一視をしていないから。
-pgs = slave_db.select('SELECT (SELECT pg_title FROM page AS pg WHERE pg.pg_id = t1.ntc_pg_id) AS title FROM nicotagcount AS t1 WHERE ntc_date = (SELECT MAX(ntc_date) FROM nicotagcount AS t2 WHERE t1.ntc_pg_id = t2.ntc_pg_id) ORDER BY ntc_cnt DESC LIMIT ?', (NNODES * 1.1).to_i).map{|i| i[0].tr(' ', '_')}
-# ひらがな・カタカナ同一視をして同じものを省く
-temp_hash = {}
-pgs.reject! {|p|
-  np = Util.convert_hiragana_to_katakana(p)
-  if temp_hash.has_key?(np)
-    true
-  else
-    temp_hash[np] = true
-    false
-  end
+pgs = []
+normalize_hash = {}
+open("tagstats.txt") {|f|
+  f.each_line {|s|
+    tag, count = s.split("\t")
+    # ひらがな・カタカナ同一視をして同じものを省く
+    normalized_tag = convert_hiragana_to_katakana(tag)
+    unless normalize_hash.has_key?(normalized_tag)
+      pgs.push(tag.tr(' ', '_'))
+      normalize_hash[normalized_tag] = true
+    end
+  }
 }
 pgs = pgs[0...NNODES]
 
@@ -46,20 +47,38 @@ pg_matrix = (0...pgs.length).map {|i|
   }
 }
 
+COUNT_REGEX = %r{<total_count>(\d+)</total_count>};
+def get_tag_count(tag)
+  tag = tag.tr('〜', '～')
+
+  https = Net::HTTP.new('api.nicovideo.jp', 443)
+  https.use_ssl = true
+
+  res = https.start {
+    response = https.get('/tag.search?limit=0&tag=' + URI.escape(tag), 'User-Agent' => 'nicowiki')
+    m = COUNT_REGEX.match(response.body)
+    if m
+      m[1]
+    else
+      nil
+    end
+  }
+end
+
 # get counts
-pg_counts = pgs.map {|p|
-  NicoVideo.get_tag_count(p)
+pg_counts = pgs.map {|tag|
+  get_tag_count(tag)
 }
 
 # get matrix
 pg_combs.each {|p|
-  tag_count = NicoVideo.get_tag_count_raw(p.join(' '))
+  tag_count = get_tag_count(p.map{|tag| tag.join(' '))
   pg_matrix[pgs.index(p[0])][pgs.index(p[1])] = tag_count
   pg_matrix[pgs.index(p[1])][pgs.index(p[0])] = tag_count
 }
 
 # output lgl files see:http://bioinformatics.icmb.utexas.edu/lgl/#FileFormat
-open('tag_cooccur.lgl', 'w') {|f|
+open('tag_cooccur-1000.lgl', 'w') {|f|
   (0...pgs.length).each {|i|
     f.puts "# #{pgs[i]}(#{pg_counts[i]})"
     (i...pgs.length).each {|j|
@@ -67,4 +86,3 @@ open('tag_cooccur.lgl', 'w') {|f|
     }
   }
 }
-
