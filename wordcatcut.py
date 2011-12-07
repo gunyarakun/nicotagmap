@@ -2,11 +2,12 @@
 
 import igraph
 import re
+import sys
 
 CUT = 100
 
-def main():
-  g = igraph.read('tag_wordnet.lgl', 'lgl')
+def main(infile):
+  g = igraph.read(infile, 'lgl')
   d = g.community_fastgreedy()
   mem = d.cut(CUT)
   categories = [[] for i in xrange(CUT)]
@@ -21,4 +22,7 @@ def main():
       print "%s : %d" % (c[1], c[0])
 
 if __name__ == '__main__':
-  main()
+  if len(sys.argv) != 2:
+    print 'usage: ./wordcatcut.py input_tag_wordnet.lgl'
+    exit(1)
+  main(sys.argv[1])
