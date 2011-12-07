@@ -42,6 +42,9 @@ dsfmt_t dsfmt;
 // C daisuki
 #include <cstdio>
 
+// for color
+void cl2pix(double* R, double* G, double* B, double c, double l);
+
 // precition
 #include <CGAL/Lazy_exact_nt.h>
 #include <CGAL/Gmpq.h>
@@ -157,7 +160,7 @@ operator<<(std::ostream &os, const TreeNode &tn)
   return tn.print_ostream(os);
 }
 
-NT epsilon(0.005);
+NT epsilon(0.0008);
 NT nt_one(1);
 
 static Point_2 centroid(const Polygon_2& poly)
@@ -507,10 +510,21 @@ void TreeNode::draw_region(cairo_t *cr) const {
         cairo_pattern_create_linear(bbox.xmin(), bbox.ymin(),
                                     bbox.xmax(), bbox.ymax());
       cairo_pattern_add_color_stop_rgb(fill, 0.0, 1.0, 1.0, 1.0);
+
+      /* L*a*b* 色空間
+      {
+        double r, g, b;
+        cl2pix(&r, &g, &b,
+          dsfmt_genrand_open_open(&dsfmt),
+          dsfmt_genrand_open_open(&dsfmt));
+        cairo_pattern_add_color_stop_rgb(fill, 1.0, r, g, b);
+      }
+      */
+      // 単なるRGB
       cairo_pattern_add_color_stop_rgb(fill, 1.0,
-                                       dsfmt_genrand_open_open(&dsfmt),
-                                       dsfmt_genrand_open_open(&dsfmt),
-                                       dsfmt_genrand_open_open(&dsfmt));
+        dsfmt_genrand_open_open(&dsfmt),
+        dsfmt_genrand_open_open(&dsfmt),
+        dsfmt_genrand_open_open(&dsfmt));
 
       cairo_move_to(cr, CGAL::to_double(vcir->x()), CGAL::to_double(vcir->y()));
       ++vcir;
@@ -536,7 +550,11 @@ void TreeNode::draw_region(cairo_t *cr) const {
 
 void TreeNode::draw_text(cairo_t *cr) const {
   if (this->name) {
-    cairo_move_to(cr, CGAL::to_double(p.x()), CGAL::to_double(p.y()));
+    cairo_text_extents_t extents;
+    cairo_text_extents(cr, name, &extents);
+    cairo_move_to(cr,
+      CGAL::to_double(p.x() - (extents.width / 2)),
+      CGAL::to_double(p.y() - (extents.height / 2)));
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_show_text(cr, name);
   }

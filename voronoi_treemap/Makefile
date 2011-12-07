@@ -1,6 +1,6 @@
-OBJS = vorotree.o dSFMT.o
-CFLAGS = -O0 -ggdb -march=core2 -I/usr/include/cairo
-LIBS = -pthread -lmpfr -lgmp -lCGAL -lcairo
+OBJS = vorotree.o dSFMT.o color.o
+CFLAGS = -O0 -ggdb -march=core2 -frounding-math -I/usr/include/cairo
+LIBS = -pthread -lmpfr -lgmp -lCGAL -lcairo -lboost_thread
 CC = g++
 COMPILE = $(CC) $(CFLAGS)
 
