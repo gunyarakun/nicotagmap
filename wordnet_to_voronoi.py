@@ -5,8 +5,8 @@ import sys
 import math
 import string
 
-MERGE_ADJACENT_LEAF = False
-LOG_AREA = False
+MERGE_ADJACENT_LEAF = True
+LOG_AREA = True
 CONST_AREA = False
 
 def main(infile):
@@ -76,6 +76,6 @@ def main(infile):
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
-    print 'usage: ./lgl2xgmml.py input_tag_wordnet.lgl'
+    print 'usage: ./wordnet_to_voronoi.py input_tag_wordnet.lgl'
     exit(1)
   main(sys.argv[1])
