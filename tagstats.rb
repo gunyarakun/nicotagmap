@@ -1,13 +1,12 @@
-#!/usr/bin/ruby
-$KCODE = 'u'
+#!/usr/bin/env ruby
+# encoding: utf-8
 
 # タグ統計 for ニコニコ動画統計クラスタ
 require 'uri'
 require 'net/https'
 require 'pp'
-require 'jcode'
 
-NNODES = 1000
+NNODES = 2525
 
 def convert_hiragana_to_katakana(str)
   str.nil? ? nil : str.tr('ぁ-ん', 'ァ-ン')
@@ -26,26 +25,10 @@ open("tagstats.txt") {|f|
     end
   }
 }
+puts "#{NNODES} required, actual #{pgs.length}"
+$stdout.flush
+
 pgs = pgs[0...NNODES]
-
-class Array
-  def combination(num)
-    return [] if num < 1 || num > size
-    return map{|e| [e] } if num == 1
-    tmp = self.dup
-    self[0, size - (num - 1)].inject([]) do |ret, e|
-      tmp.shift
-      ret += tmp.combination(num - 1).map{|a| a.unshift(e) }
-    end
-  end
-end
-
-pg_combs = pgs.combination(2)
-pg_matrix = (0...pgs.length).map {|i|
-  (0...pgs.length).map {|j|
-    0
-  }
-}
 
 COUNT_REGEX = %r{<total_count>(\d+)</total_count>};
 def get_tag_count(tag)
@@ -66,23 +49,31 @@ def get_tag_count(tag)
 end
 
 # get counts
+n = 0
 pg_counts = pgs.map {|tag|
+  n += 1
+  if n % 100 == 0
+    puts "#{Time.now.inspect} get_tag_count n: #{n}"
+    $stdout.flush
+  end
   get_tag_count(tag)
 }
 
-# get matrix
-pg_combs.each {|p|
-  tag_count = get_tag_count(p.map{|tag| tag.join(' '))
-  pg_matrix[pgs.index(p[0])][pgs.index(p[1])] = tag_count
-  pg_matrix[pgs.index(p[1])][pgs.index(p[0])] = tag_count
-}
-
+n = 0
 # output lgl files see:http://bioinformatics.icmb.utexas.edu/lgl/#FileFormat
-open('tag_cooccur-1000.lgl', 'w') {|f|
-  (0...pgs.length).each {|i|
+open('tag_cooccur.lgl', 'w') {|f|
+  (2513...pgs.length).each {|i|
     f.puts "# #{pgs[i]}(#{pg_counts[i]})"
     (i...pgs.length).each {|j|
-      f.puts "#{pgs[j]}(#{pg_counts[j]}) #{pg_matrix[i][j]}" if i != j
+      tag_count = get_tag_count("#{pgs[i]} #{pgs[j]}")
+      f.puts "#{pgs[j]}(#{pg_counts[j]}) #{tag_count}" if i != j
+
+      n += 1
+      if n % 500 == 0
+        puts "#{Time.now.inspect} n: #{n} i: #{i} j: #{j}"
+        $stdout.flush
+        f.flush
+      end
     }
   }
 }
