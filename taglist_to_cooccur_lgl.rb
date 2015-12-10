@@ -6,29 +6,39 @@ require 'uri'
 require 'net/https'
 require 'pp'
 
-NNODES = 2525
+if ARGV.length != 3
+  puts "./#{$PROGRAM_NAME} infile.txt outfile.lgl node_count"
+  exit(1)
+end
+
+infile = ARGV[0]
+outfile = ARGV[1]
+nnodes = ARGV[2].to_i
 
 def convert_hiragana_to_katakana(str)
   str.nil? ? nil : str.tr('ぁ-ん', 'ァ-ン')
 end
 
 pgs = []
+pg_counts = []
 normalize_hash = {}
-open("tagstats.txt") {|f|
+open(infile) {|f|
   f.each_line {|s|
     tag, count = s.split("\t")
     # ひらがな・カタカナ同一視をして同じものを省く
     normalized_tag = convert_hiragana_to_katakana(tag)
     unless normalize_hash.has_key?(normalized_tag)
       pgs.push(tag.tr(' ', '_'))
+      pg_counts.push(count.to_i)
       normalize_hash[normalized_tag] = true
     end
   }
 }
-puts "#{NNODES} required, actual #{pgs.length}"
+puts "#{nnodes} required, actual #{pgs.length}"
 $stdout.flush
 
-pgs = pgs[0...NNODES]
+pgs = pgs[0...nnodes]
+pg_counts = pg_counts[0...nnodes]
 
 COUNT_REGEX = %r{<total_count>(\d+)</total_count>};
 def get_tag_count(tag)
@@ -48,21 +58,10 @@ def get_tag_count(tag)
   }
 end
 
-# get counts
-n = 0
-pg_counts = pgs.map {|tag|
-  n += 1
-  if n % 100 == 0
-    puts "#{Time.now.inspect} get_tag_count n: #{n}"
-    $stdout.flush
-  end
-  get_tag_count(tag)
-}
-
 n = 0
 # output lgl files see:http://bioinformatics.icmb.utexas.edu/lgl/#FileFormat
-open('tag_cooccur.lgl', 'w') {|f|
-  (2513...pgs.length).each {|i|
+open(outfile, 'w') {|f|
+  (0...pgs.length).each {|i|
     f.puts "# #{pgs[i]}(#{pg_counts[i]})"
     (i...pgs.length).each {|j|
       tag_count = get_tag_count("#{pgs[i]} #{pgs[j]}")
