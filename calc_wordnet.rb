@@ -1,5 +1,5 @@
-#!/usr/bin/ruby
-$KCODE = 'u'
+#!/usr/bin/env ruby
+# encoding: utf-8
 require 'pp'
 
 if ARGV.length != 3
@@ -15,10 +15,12 @@ pgs = []
 pg_matrix = []
 cnt = 0
 i = -1
-open(infile) {|f|
-  while l = f.gets
+File.open(infile, 'r') {|f|
+  f.each_line do |l|
+    l.chomp!
     cnt += 1
     puts cnt if cnt % 1000 == 0
+    puts l
     spl = l.split(' ')
     if spl[0] == '#'
       i += 1
@@ -28,7 +30,7 @@ open(infile) {|f|
       pgs << spl[0]
       pg_matrix[pgs.length - 1] = [] unless pg_matrix[pgs.length - 1]
       if spl[1]
-        cooccur = Integer(spl[1])
+        cooccur = spl[1].to_i
         pg_matrix[i][pgs.length - 1] = cooccur
         pg_matrix[pgs.length - 1][i] = cooccur
       else
@@ -36,7 +38,7 @@ open(infile) {|f|
       end
     else
       if spl[0]
-        cooccur = Integer(spl[1])
+        cooccur = spl[1].to_i
         pg_matrix[i][index] = cooccur
         pg_matrix[index][i] = cooccur
       else

@@ -1,5 +1,7 @@
-#!/usr/bin/python
-import igraph
+#!/usr/bin/env python
+from __future__ import print_function
+
+from igraph import *
 import re
 import sys
 import math
@@ -10,7 +12,7 @@ LOG_AREA = True
 CONST_AREA = False
 
 def main(infile):
-  g = igraph.read(infile, 'lgl')
+  g = Graph.Read_Lgl(infile)
   d = g.community_fastgreedy()
   r = re.compile(r'(?P<name>.+)\((?P<count>\d+)\)')
 
@@ -72,10 +74,10 @@ def main(infile):
     results.append(sc)
 
   cstrs.append('#define ROOT_TREE_NODE tn%d' % nn)
-  print '\n'.join(cstrs)
+  print('\n'.join(cstrs))
 
 if __name__ == '__main__':
   if len(sys.argv) != 2:
-    print 'usage: ./wordnet_to_voronoi.py input_tag_wordnet.lgl'
+    print('usage: ./wordnet_to_voronoi.py input_tag_wordnet.lgl')
     exit(1)
   main(sys.argv[1])
