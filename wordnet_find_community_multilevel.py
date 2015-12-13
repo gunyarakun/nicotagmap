@@ -7,6 +7,9 @@ import sys
 import json
 import string
 
+RECURSIVE_FIND = True
+USE_LAST_LEVEL_OF_COMMUNITY = True
+
 def find_community_multilevel(graph):
   # タグ名(動画数)となっているので、それを取り出す
   r = re.compile(r'(?P<name>.+)\((?P<count>\d+)\)')
@@ -14,16 +17,24 @@ def find_community_multilevel(graph):
   cm = graph.community_multilevel(weights='weight', return_levels=True)
   root_node = {'name': '', 'children': []}
   children = []
-  for node_ids in cm[-1]:
-    # cm[-1]はVertexClusteringのインスタンス
-    children = []
-    for node_id in node_ids:
-      node = graph.vs[node_id]
-      matched = r.match(node['name'])
-      children.append({
-        'name': matched.group('name'),
-        'size': int(matched.group('count')),
-      })
+  # cmは添え字が進めば進むほど学習が進んでる
+  # 再帰的に適用するため、クラスタを細かくしすぎないように: cm[0]
+  # とにかく各段階で学習を進める: cm[-1]
+  cm_index = -1 if USE_LAST_LEVEL_OF_COMMUNITY else 0
+  for node_ids in cm[cm_index]:
+    if len(node_ids) >= 40 and RECURSIVE_FIND:
+      subgraph = graph.subgraph(node_ids)
+      subcom = find_community_multilevel(subgraph)
+      children = subcom['children']
+    else:
+      children = []
+      for node_id in node_ids:
+        node = graph.vs[node_id]
+        matched = r.match(node['name'])
+        children.append({
+          'name': matched.group('name'),
+          'size': int(matched.group('count')),
+        })
     root_node['children'].append({
       'name': '',
       'children': children,
