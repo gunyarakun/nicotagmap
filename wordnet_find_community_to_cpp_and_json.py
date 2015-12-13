@@ -11,13 +11,18 @@ import string
 MERGE_ADJACENT_LEAF = True
 # そのマージの際にセルごとマージする
 MERGE_CELL = False
+# LGLのweightを使うか
+USE_WEIGHT = False
 
 def main(infile, out_cppfile, out_jsonfile):
   # 無向グラフとしてLGLを読み込む wordnetとして処理済みの奴を
   # 重みは読まない
-  g = Graph.Read_Lgl(infile, directed=False)
+  g = Graph.Read_Lgl(infile, weights=(not USE_WEIGHT), directed=False)
   # コミュニティのデンドログラムを作る
-  d = g.community_fastgreedy(weights='weight')
+  if USE_WEIGHT:
+    d = g.community_fastgreedy(weights='weight')
+  else:
+    d = g.community_fastgreedy()
   # タグ名(動画数)となっているので、それを取り出す
   r = re.compile(r'(?P<name>.+)\((?P<count>\d+)\)')
 
