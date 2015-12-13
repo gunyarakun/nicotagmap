@@ -7,14 +7,17 @@ import sys
 import json
 import string
 
+# デンドログラムでリーフノードの場合にはマージする
 MERGE_ADJACENT_LEAF = True
+# そのマージの際にセルごとマージする
+MERGE_CELL = False
 
 def main(infile, out_cppfile, out_jsonfile):
   # 無向グラフとしてLGLを読み込む wordnetとして処理済みの奴を
-　# 重みは読まない
-  g = Graph.Read_Lgl(infile, weights=False, directed=False)
+  # 重みは読まない
+  g = Graph.Read_Lgl(infile, directed=False)
   # コミュニティのデンドログラムを作る
-  d = g.community_fastgreedy()
+  d = g.community_fastgreedy(weights='weight')
   # タグ名(動画数)となっているので、それを取り出す
   r = re.compile(r'(?P<name>.+)\((?P<count>\d+)\)')
 
@@ -25,7 +28,7 @@ def main(infile, out_cppfile, out_jsonfile):
     sc = {
       'id': elem,
       'name': matched.group('name'),
-      'area': int(matched.group('count')),
+      'size': int(matched.group('count')),
       'leaf': True,
       'children': None,
     }
@@ -41,12 +44,14 @@ def main(infile, out_cppfile, out_jsonfile):
     merge_node = {
       'id': len(results),
       'name': '',
-      'area': n1['area'] + n2['area'],
+      'size': n1['size'] + n2['size'],
       'leaf': False,
       'children': [v1, v2],
     }
 
     results.append(merge_node)
+
+  sys.setrecursionlimit(10000)
 
   tree = traverse_children(results, len(results) - 1)
   if MERGE_ADJACENT_LEAF:
@@ -58,7 +63,6 @@ def main(infile, out_cppfile, out_jsonfile):
   with open(out_cppfile, 'w') as file:
     file.write('\n'.join(cstrs))
 
-  sys.setrecursionlimit(10000)
   with open(out_jsonfile, 'w') as file:
     json.dump(tree, file, ensure_ascii=False, indent=2)
 
@@ -68,7 +72,7 @@ def traverse_children(source, node_number):
   tree['name'] = node['name']
   tree['id'] = node['id']
   if node['children'] is None:
-    tree['size'] = node['area']
+    tree['size'] = node['size']
   else:
     children = []
     for children_node_number in node['children']:
@@ -85,19 +89,35 @@ def merge_adjacent_leaf(node):
     return node
 
   for child in node['children']:
-    if 'children' in child:
-      not_leaf_nodes.append(merge_adjacent_leaf(child))
+    merged_child = merge_adjacent_leaf(child)
+    if 'children' in merged_child:
+      not_leaf_nodes.append(merged_child)
     else:
-      leaf_nodes.append(child)
+      leaf_nodes.append(merged_child)
 
   if len(not_leaf_nodes) == 1 and len(leaf_nodes) == 1:
     # 子のうち、リーフノードが1つ、非リーフノードが１つの場合
-    not_leaf_nodes[0]['children'].append(leaf_nodes[0])
-    # マージしたグループを作る
-    node['children'] = not_leaf_nodes[0]['children']
+    if MERGE_CELL:
+      raise ValueError('arien')
+    else:
+      # マージしたグループを作る
+      node['children'] = not_leaf_nodes[0]['children'][:]
+      node['children'].append(leaf_nodes[0])
   elif len(not_leaf_nodes) == 0 and len(leaf_nodes) > 0:
-    # 全リーフの場合、グループ作成
-    node['children'] = leaf_nodes
+    # 全リーフの場合
+    if MERGE_CELL:
+      node = {
+        'id': leaf_nodes[0]['id'],
+        'name': '\r'.join([x['name'] for x in leaf_nodes]),
+        'size': sum([x['size'] for x in leaf_nodes]),
+      }
+    else:
+      # グループ作成
+      node['children'] = leaf_nodes
+  else:
+    # 普通な場合
+    node['children'] = not_leaf_nodes
+    node['children'].extend(leaf_nodes)
 
   return node
 
