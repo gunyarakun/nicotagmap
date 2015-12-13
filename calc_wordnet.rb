@@ -20,7 +20,6 @@ File.open(infile, 'r') {|f|
     l.chomp!
     cnt += 1
     puts cnt if cnt % 1000 == 0
-    puts l
     spl = l.split(' ')
     if spl[0] == '#'
       i += 1
