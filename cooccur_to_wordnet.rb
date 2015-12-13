@@ -70,20 +70,11 @@ C2 = (0...pgs.length).map {|i|
   }
 }
 
-#open('tag_chi2.lgl', 'w') {|f|
-#  (0...pgs.length).each {|i|
-#    f.puts "# #{pgs[i]}"
-#    (i...pgs.length).each {|j|
-#      f.puts "#{pgs[j]} #{C2[i][j]}" if i != j
-#    }
-#  }
-#}
-
 open(outfile, 'w') {|f|
   (0...pgs.length).each {|i|
     f.puts "# #{pgs[i]}"
     (i...pgs.length).each {|j|
-      f.puts "#{pgs[j]}" if i != j and C2[i][j] > threshold
+      f.puts "#{pgs[j]} #{C2[i][j]}" if i != j and C2[i][j] > threshold
     }
   }
 }
