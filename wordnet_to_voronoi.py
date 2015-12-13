@@ -57,7 +57,6 @@ def main(infile):
         merge_node['children'].extend(n1['children'])
         merge_node['children'].append(v2)
       else:
-        print("kitaktak")
         merge_node['children'].append(nn)
         cstrs.append('TreeNode tn%d(NULL, %f);' % (nn, merge_node['area']))
         for idx in n1['children']:
