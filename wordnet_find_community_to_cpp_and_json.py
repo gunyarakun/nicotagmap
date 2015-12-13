@@ -11,7 +11,8 @@ MERGE_ADJACENT_LEAF = True
 
 def main(infile, out_cppfile, out_jsonfile):
   # 無向グラフとしてLGLを読み込む wordnetとして処理済みの奴を
-  g = Graph.Read_Lgl(infile, directed=False)
+　# 重みは読まない
+  g = Graph.Read_Lgl(infile, weights=False, directed=False)
   # コミュニティのデンドログラムを作る
   d = g.community_fastgreedy()
   # タグ名(動画数)となっているので、それを取り出す
