@@ -7,8 +7,8 @@ import sys
 import json
 import string
 
-RECURSIVE_FIND = True
-USE_LAST_LEVEL_OF_COMMUNITY = True
+RECURSIVE_CLUSTER = True
+USE_LAST_LEVEL_OF_COMMUNITY = False
 
 def find_community_multilevel(graph):
   # タグ名(動画数)となっているので、それを取り出す
@@ -22,7 +22,7 @@ def find_community_multilevel(graph):
   # とにかく各段階で学習を進める: cm[-1]
   cm_index = -1 if USE_LAST_LEVEL_OF_COMMUNITY else 0
   for node_ids in cm[cm_index]:
-    if len(node_ids) >= 40 and RECURSIVE_FIND:
+    if len(node_ids) >= 40 and RECURSIVE_CLUSTER:
       subgraph = graph.subgraph(node_ids)
       subcom = find_community_multilevel(subgraph)
       children = subcom['children']
