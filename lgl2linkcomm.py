@@ -3,9 +3,9 @@
 import sys
 from igraph import *
 
-PRECISION = 12
+PRECISION = 8
 
-def main(infile, outfile):
+def main(infile, outfile, threshold):
   g = Graph.Read_Lgl(infile, directed=False)
 
   max_weight = 0
@@ -15,14 +15,13 @@ def main(infile, outfile):
 
   with open(outfile, 'w') as f:
     for e in g.es:
-      # NOTE: "%.10f" % rel_weight
       weight = ("%%.%df" % PRECISION) % (e['weight'] / max_weight)
       # Remove too small edge
-      if weight != ('0.' + '0' * PRECISION):
+      if float(weight) > threshold:
         f.write("%s %s %.10f\n" % (g.vs[e.source]['name'], g.vs[e.target]['name'], e['weight'] / max_weight))
 
 if __name__ == '__main__':
-  if len(sys.argv) != 3:
-    print('usage: %s input.lgl output.linkcomm.txt' % sys.argv[0])
+  if len(sys.argv) != 4:
+    print('usage: %s input.lgl output.linkcomm.txt threshold' % sys.argv[0])
     exit(1)
-  main(sys.argv[1], sys.argv[2])
+  main(sys.argv[1], sys.argv[2], float(sys.argv[3]))
