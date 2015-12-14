@@ -3,6 +3,8 @@
 import sys
 from igraph import *
 
+PRECISION = 12
+
 def main(infile, outfile):
   g = Graph.Read_Lgl(infile, directed=False)
 
@@ -13,7 +15,11 @@ def main(infile, outfile):
 
   with open(outfile, 'w') as f:
     for e in g.es:
-      f.write("%s %s %.10f\n" % (g.vs[e.source]['name'], g.vs[e.target]['name'], e['weight'] / max_weight))
+      # NOTE: "%.10f" % rel_weight
+      weight = ("%%.%df" % PRECISION) % (e['weight'] / max_weight)
+      # Remove too small edge
+      if weight != ('0.' + '0' * PRECISION):
+        f.write("%s %s %.10f\n" % (g.vs[e.source]['name'], g.vs[e.target]['name'], e['weight'] / max_weight))
 
 if __name__ == '__main__':
   if len(sys.argv) != 3:
