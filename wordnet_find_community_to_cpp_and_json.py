@@ -5,6 +5,7 @@ from igraph import *
 import re
 import sys
 import json
+import random
 import string
 
 # デンドログラムでリーフノードの場合にはマージする
@@ -48,7 +49,7 @@ def main(infile, out_cppfile, out_jsonfile):
     # if n1 is None or n2 is None: continue
     merge_node = {
       'id': len(results),
-      'name': '',
+      'name': random.randint(0, 19),
       'size': n1['size'] + n2['size'],
       'leaf': False,
       'children': [v1, v2],
@@ -141,6 +142,6 @@ def dump_cpp(cstrs, node):
 
 if __name__ == '__main__':
   if len(sys.argv) != 4:
-    print('usage: ./wordnet_to_voronoi.py input_tag_wordnet.lgl output.cpp output.json')
+    print('usage: %s input_tag_wordnet.lgl output.cpp output.json' % sys.argv[0])
     exit(1)
   main(sys.argv[1], sys.argv[2], sys.argv[3])
