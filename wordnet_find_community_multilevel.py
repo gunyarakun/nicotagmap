@@ -5,6 +5,7 @@ from igraph import *
 import re
 import sys
 import json
+import random
 import string
 
 RECURSIVE_CLUSTER = True
@@ -15,7 +16,7 @@ def find_community_multilevel(graph):
   r = re.compile(r'(?P<name>.+)\((?P<count>\d+)\)')
 
   cm = graph.community_multilevel(weights='weight', return_levels=True)
-  root_node = {'name': '', 'children': []}
+  root_node = {'name': '%d' % random.randint(0, 19), 'children': []}
   children = []
   # cmは添え字が進めば進むほど学習が進んでる
   # 再帰的に適用するため、クラスタを細かくしすぎないように: cm[0]
@@ -36,7 +37,7 @@ def find_community_multilevel(graph):
           'size': int(matched.group('count')),
         })
     root_node['children'].append({
-      'name': '',
+      'name': '%d' % random.randint(0, 19),
       'children': children,
     })
   return root_node
