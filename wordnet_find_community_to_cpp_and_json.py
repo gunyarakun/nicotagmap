@@ -37,6 +37,7 @@ def main(infile, out_cppfile, out_jsonfile):
       'size': int(matched.group('count')),
       'leaf': True,
       'children': None,
+      'color': random.randint(0, 19),
     }
     results[elem] = sc
 
@@ -49,10 +50,11 @@ def main(infile, out_cppfile, out_jsonfile):
     # if n1 is None or n2 is None: continue
     merge_node = {
       'id': len(results),
-      'name': random.randint(0, 19),
+      'name': '',
       'size': n1['size'] + n2['size'],
       'leaf': False,
       'children': [v1, v2],
+      'color': random.randint(0, 19),
     }
 
     results.append(merge_node)
@@ -75,6 +77,7 @@ def main(infile, out_cppfile, out_jsonfile):
 def traverse_children(source, node_number):
   tree = {}
   node = source[node_number]
+  tree['color'] = node['color']
   tree['name'] = node['name']
   tree['id'] = node['id']
   if node['children'] is None:

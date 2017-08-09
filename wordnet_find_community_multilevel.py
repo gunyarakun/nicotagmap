@@ -16,7 +16,7 @@ def find_community_multilevel(graph):
   r = re.compile(r'(?P<name>.+)\((?P<count>\d+)\)')
 
   cm = graph.community_multilevel(weights='weight', return_levels=True)
-  root_node = {'name': '%d' % random.randint(0, 19), 'children': []}
+  root_node = {'name': '', 'children': [], 'color': random.randint(0, 19)}
   children = []
   # cmは添え字が進めば進むほど学習が進んでる
   # 再帰的に適用するため、クラスタを細かくしすぎないように: cm[0]
@@ -35,10 +35,12 @@ def find_community_multilevel(graph):
         children.append({
           'name': matched.group('name'),
           'size': int(matched.group('count')),
+          'color': random.randint(0, 19)
         })
     root_node['children'].append({
-      'name': '%d' % random.randint(0, 19),
+      'name': '',
       'children': children,
+      'color': random.randint(0, 19)
     })
   return root_node
 
